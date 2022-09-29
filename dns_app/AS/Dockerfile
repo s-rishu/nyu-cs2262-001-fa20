@@ -15,6 +15,8 @@ RUN pip install Flask
 RUN pip install Flask-API
 RUN pip install dnspython
 RUN pip install requests
+RUN pip install numpy==1.18.0
+RUN pip install pandas==0.24.2
 
 USER nyu
 
