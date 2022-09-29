@@ -4,10 +4,7 @@ import requests
 
 import socket
 
-import dns.resolver as dns
-
 app = Flask(__name__)
-#http://127.0.0.1:8080/fibonacci?hostname=fibonacci.com&fs_port=9090&as_ip=1&as_port=1&number=10
 
 @app.route('/')
 def hello_world():
@@ -15,6 +12,7 @@ def hello_world():
 
 @app.route('/fibonacci', methods=['GET'])
 def fibonacci():
+    #get arguments
     args = request.args
     try:
         hostname = args.get("hostname")
@@ -30,7 +28,21 @@ def fibonacci():
     except:
         return "Parameters are missing", status.HTTP_400_BAD_REQUEST
 
-    fib = requests.get("http://{}:{}/fibonacci?number={}".format("0.0.0.0", fs_port, number)).content.decode() #update hostname ip
+    #get hostname ip
+    message = "TYPE={}\nNAME={}".format('A', hostname)
+    as_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    as_socket.sendto(message.encode(), (as_ip, as_port))
+    response, server_add = as_socket.recvfrom(2048)
+    as_socket.close()
+    response = response.decode()
+    response = response.split('\n')
+    for data in response:
+        data = data.split('=')
+        if data[0] == "VALUE":
+            hostname_ip = data[1]
+
+    #get request to FS server
+    fib = requests.get("http://{}:{}/fibonacci?number={}".format(hostname_ip, fs_port, number)).content.decode()
     return str(fib)
 
 
