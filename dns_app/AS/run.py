@@ -6,8 +6,11 @@ as_ip = "0.0.0.0"
 as_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 as_socket.bind((as_ip, as_port))
 
-csv_path = "./dns_data.csv"
-dns_data = pandas.DataFrame(columns={"TYPE", "NAME", "VALUE", "TTL"}).set_index(['TYPE', 'NAME'])
+csv_path = "./AS/dns_data.csv"
+try:
+    dns_data = pandas.read_csv(csv_path)
+except:
+    dns_data = pandas.DataFrame(columns={"TYPE", "NAME", "VALUE", "TTL"})
 
 while True:
     message, client_add = as_socket.recvfrom(2048)
@@ -25,9 +28,9 @@ while True:
                     value = data[1]
                 elif data[0] == "TTL":
                     ttl = data[1]
-            if [type, name] not in dns_data.index:
-                dns_data.append({"TYPE": type, "NAME": name, "VALUE": value, "TTL": ttl}).set_index(['TYPE', 'NAME'])
-                dns_data.to_csv(csv_path)
+            d = pandas.DataFrame([[type, name, value, ttl]],columns=["TYPE", "NAME", "VALUE", "TTL"])
+            dns_data = pandas.concat([dns_data, d], ignore_index=True).drop_duplicates(subset=['NAME'], keep='last')
+            dns_data.to_csv(csv_path)
 
             as_socket.sendto("Success".encode(), client_add)
         except:
@@ -40,10 +43,10 @@ while True:
                 type = data[1]
             elif data[0] == "NAME":
                 name = data[1]
-            if [type, name] in dns_data.index:
-                 value = dns_data[[type, name]]["VALUE"]
-                 ttl = dns_data[[type, name]]["TTL"]
-            response = "TYPE={}\nNAME={}\nVALUE={}\nTTL={}".format(type, name, value, ttl)
-            as_socket.sendto(response.encode(), client_add)
+        value = dns_data.loc[dns_data["NAME"]==name, "VALUE"].array[0]
+        ttl = dns_data.loc[dns_data["NAME"]==name, "TTL"].array[0]
+        response = "TYPE={}\nNAME={}\nVALUE={}\nTTL={}".format(type, name, value, ttl)
+
+        as_socket.sendto(response.encode(), client_add)
 
 

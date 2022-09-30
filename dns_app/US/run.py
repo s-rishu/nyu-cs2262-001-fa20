@@ -10,7 +10,7 @@ app = Flask(__name__)
 def hello_world():
     return 'Hello, this is user server!'
 
-@app.route('/fibonacci', methods=['GET'])
+@app.route('/fibonacci', methods=['GET'], strict_slashes=False)
 def fibonacci():
     #get arguments
     args = request.args
@@ -42,7 +42,8 @@ def fibonacci():
             hostname_ip = data[1]
 
     #get request to FS server
-    fib = requests.get("http://{}:{}/fibonacci?number={}".format(hostname_ip, fs_port, number)).content.decode()
+    url = 'http://%s:%s/fibonacci?number=%s'%(hostname_ip,fs_port, number)
+    fib = requests.get(url).content.decode()
     return str(fib)
 
 

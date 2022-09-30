@@ -8,7 +8,7 @@ app = Flask(__name__)
 def hello_world():
     return 'Hello, this is fibonacci server!'
 
-@app.route('/register', methods=['PUT'])
+@app.route('/register', methods=['PUT'], strict_slashes=False)
 def register():
     body = request.get_json(force=True)
     message = "TYPE={}\nNAME={}\nVALUE={}\nTTL={}".format('A', body["hostname"], body["ip"], 10) #type=A and ttl=10
@@ -19,9 +19,9 @@ def register():
     if message.decode()=="Success":
         return Response(status=201)
     else:
-        return status.HTTP_400_BAD_REQUEST
+        return Response(status=400)
 
-@app.route('/fibonacci', methods=['GET'])
+@app.route('/fibonacci', methods=['GET'], strict_slashes=False)
 def fibonacci():
     args = request.args
     try:
